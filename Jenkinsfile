@@ -1,70 +1,70 @@
-pipeline {
-    agent any
-
-    stages {
+node {
+    try {
 
         stage('Build') {
-            steps {
-                sh '''
-                    echo "Building Java project..."
-                    cd "Password Protection"
+            sh '''
+                echo "Building Java project..."
+                echo "Listing workspace contents:"
+                ls
 
-                    mkdir -p build
+                cd "Password Protection"
 
-                    # Compile source files
-                    javac -d build src/*.java
+                mkdir -p build
 
-                    # Copy IntelliJ-generated compiled classes needed by tests
-                    cp -r out/production/* build/
+                # Compile main sources
+                javac -d build src/*.java
 
-                    echo "Build successful"
-                '''
-            }
+                # Copy IntelliJ-generated class files into build
+                cp -r out/production/* build/
+
+                echo "Build successful"
+            '''
         }
 
         stage('Test') {
-            steps {
-                sh '''
-                    echo "Running JUnit tests..."
+            sh '''
+                echo "Running JUnit tests for File-Encrypter..."
 
-                    cd "Password Protection"
+                cd "Password Protection"
 
-                    rm -f junit-platform-console-standalone.jar
+                # REMOVE any corrupted downloaded JAR
+                rm -f junit-platform-console-standalone.jar
 
-                    curl -L -o junit-platform-console-standalone.jar \
-                    https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.0/junit-platform-console-standalone-1.10.0.jar
+                # Download correct JUnit JAR (single line!)
+                curl -L -o junit-platform-console-standalone.jar https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.0/junit-platform-console-standalone-1.10.0.jar
 
-                    echo "JUnit jar size:"
-                    ls -lh junit-platform-console-standalone.jar
+                echo "Downloaded JAR details:"
+                ls -lh junit-platform-console-standalone.jar
 
-                    mkdir -p test-build
+                # Compile test files
+                mkdir -p test-build
+                javac -cp junit-platform-console-standalone.jar:build:out/production -d test-build test/*.java
 
-                    # Add out/production for IntelliJ UI Designer classes
-                    javac -cp junit-platform-console-standalone.jar:build:out/production -d test-build test/*.java
+                # Run JUnit tests
+                java -jar junit-platform-console-standalone.jar \
+                    --class-path build:test-build:out/production \
+                    --scan-class-path
 
-                    java -jar junit-platform-console-standalone.jar \
-                     --class-path build:test-build:out/production \
-                     --scan-class-path
-
-                    echo "JUnit tests completed successfully"
-                '''
-            }
+                echo "JUnit tests executed successfully"
+            '''
         }
 
         stage('Deploy') {
-            steps {
-                sh '''
-                    echo "Packaging application..."
-                    cd "Password Protection"
-                    jar cf FileEncrypter.jar -C build .
-                    echo "Artifact ready"
-                '''
-            }
-        }
-    }
+            sh '''
+                echo "Deploying (Packaging) File-Encrypter Application..."
 
-    post {
-        success { echo "Pipeline executed successfully!" }
-        failure { echo "Pipeline failed!" }
+                cd "Password Protection"
+
+                jar cf FileEncrypter.jar -C build .
+
+                echo "Deployment successful - Artifact ready"
+            '''
+        }
+
+        echo "Pipeline executed successfully!"
+
+    } catch (Exception e) {
+        echo "Pipeline failed!"
+        throw e
     }
 }
