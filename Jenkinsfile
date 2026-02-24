@@ -28,16 +28,16 @@ node {
 
                 cd "Password Protection"
 
-                # REMOVE any corrupted downloaded JAR
+                # Remove any corrupted JAR
                 rm -f junit-platform-console-standalone.jar
 
-                # Download correct JUnit JAR (single line!)
+                # Download correct JUnit JAR (single line ONLY)
                 curl -L -o junit-platform-console-standalone.jar https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.0/junit-platform-console-standalone-1.10.0.jar
 
                 echo "Downloaded JAR details:"
                 ls -lh junit-platform-console-standalone.jar
 
-                # Compile test files
+                # Compile test files (add out/production for IntelliJ classes)
                 mkdir -p test-build
                 javac -cp junit-platform-console-standalone.jar:build:out/production -d test-build test/*.java
 
@@ -52,7 +52,7 @@ node {
 
         stage('Deploy') {
             sh '''
-                echo "Deploying (Packaging) File-Encrypter Application..."
+                echo "Packaging File-Encrypter application..."
 
                 cd "Password Protection"
 
