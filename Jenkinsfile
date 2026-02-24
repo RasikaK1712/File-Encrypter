@@ -24,28 +24,31 @@ pipeline {
             steps {
                 sh '''
                     echo "Running JUnit tests for File-Encrypter..."
-
+        
                     cd "Password Protection"
-
-                    # Download JUnit jar if not already present
-                    if [ ! -f junit-platform-console-standalone.jar ]; then
-                        echo "Downloading JUnit..."
-                        curl -L -o junit-platform-console-standalone.jar https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.0/junit-platform-console-standalone-1.10.0.jar
-                    fi
-
+        
+                    # Always remove old corrupted JAR
+                    rm -f junit-platform-console-standalone.jar
+        
+                    echo "Downloading fresh JUnit JAR..."
+                    curl -L -o junit-platform-console-standalone.jar https://repo1.maven.org/maven2/org/junit/platform/junit-platform-console-standalone/1.10.0/junit-platform-console-standalone-standalone-1.10.0.jar
+        
+                    echo "Checking downloaded file size:"
+                    ls -lh junit-platform-console-standalone.jar
+        
                     # Compile test files
                     mkdir -p test-build
                     javac -cp junit-platform-console-standalone.jar:build -d test-build test/*.java
-
+        
                     # Run JUnit tests
                     java -jar junit-platform-console-standalone.jar \
-                    --class-path build:test-build \
-                    --scan-class-path
-
+                        --class-path build:test-build \
+                        --scan-class-path
+        
                     echo "JUnit tests executed successfully"
                 '''
             }
-        }
+}
 
         stage('Deploy') {
             steps {
